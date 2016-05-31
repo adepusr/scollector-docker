@@ -82,4 +82,4 @@ if [ ! -e ${CONFIG_FILE} ]; then
 fi
 
 # RUN scollector
-exec /go/bin/scollector ${OPTIONS} -h="${SC_CONF_Host}"
+exec /go/bin/scollector ${OPTIONS}
