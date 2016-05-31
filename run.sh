@@ -38,8 +38,8 @@ if [ "X${SC_CONF_TAG_container_id}" != "X" ]; then
 fi
 
 # Validate mandatory arguments
-if [ "X${SC_CONF_tsdbHost}" == "X" ]; then
-    echo "Env variable 'SC_CONF_tsdbHost' missing - OpenTSDB / Bosun host not configured. Aborting!"
+if [ "X${SC_CONF_Host}" == "X" ]; then
+    echo "Env variable 'SC_CONF_Host' missing - OpenTSDB / Bosun host not configured. Aborting!"
     exit 1
 fi
 
