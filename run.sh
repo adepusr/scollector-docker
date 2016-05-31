@@ -2,7 +2,7 @@
 
 set -e
 
-CONFIG_FILE="/scollector/scollector.toml"
+CONFIG_FILE="/go/bin/scollector.toml"
 
 # Set OPTIONS
 if [ "X${OPTIONS}" == "X" ]; then
@@ -11,7 +11,6 @@ fi
 if echo "${DEBUG}" | grep -i "^true$" >/dev/null; then
     OPTIONS="${OPTIONS} -d"
 fi
-OPTIONS="${OPTIONS} -totoml=${CONFIG_FILE}"
 
 # Set defaults
 export SC_CONF_FullHost=${SC_CONF_FullHost:-true}
@@ -47,16 +46,21 @@ fi
 rm -f ${CONFIG_FILE}
 if [ ! -e ${CONFIG_FILE} ]; then
     touch ${CONFIG_FILE}
+    NON_STRING_CONF="$(echo -e "FullHost\nDisableSelf\nFreq\nBatchSize\nMaxQueueLen")"
+
     for VAR in $(env); do
         if echo "$VAR" | grep "^SC_CONF_TAG_" >/dev/null; then
             # Skip tag env variables
             continue
         fi
         if echo "$VAR" | grep "^SC_CONF_" >/dev/null; then
-            SC_CONF_name="$(echo "$VAR" | sed -r 's/^SC_CONF_([^=]*)=.*/\1/' | sed 's/__/./g')"
-            SC_CONF_value="$(echo "$VAR" | sed -r "s/^[^=]*=(.*)/\1/")"
-
-            echo "${SC_CONF_name}: ${SC_CONF_value}" >> ${CONFIG_FILE}
+            SC_CONF_name=$(echo "$VAR" | sed -r 's/^SC_CONF_([^=]*)=.*/\1/' | sed 's/__/./g')
+            SC_CONF_value=$(echo "$VAR" | sed -r "s/^[^=]*=(.*)/\1/")
+            if echo "${NON_STRING_CONF}" | grep "^${SC_CONF_name}$" >/dev/null; then
+                echo "${SC_CONF_name} = ${SC_CONF_value}" >> ${CONFIG_FILE}
+            else
+                echo "${SC_CONF_name} = \"${SC_CONF_value}\"" >> ${CONFIG_FILE}
+            fi
         fi
     done
     # Generate Tags
@@ -65,14 +69,17 @@ if [ ! -e ${CONFIG_FILE} ]; then
         echo '[Tags]' >> ${CONFIG_FILE}
         for VAR in $(env); do
             if echo "$VAR" | grep "^SC_CONF_TAG_" >/dev/null; then
-              SC_CONF_TAG_name="$(echo "$VAR" | sed -r 's/^SC_CONF_TAG_([^=]*)=.*/\1/' | sed 's/__/./g')"
-              SC_CONF_TAG_value="$(echo "$VAR" | sed -r "s/^[^=]*=(.*)/\1/")"
-
-              echo "${SC_CONF_TAG_name}: ${SC_CONF_TAG_value}" >> ${CONFIG_FILE}
+              SC_CONF_TAG_name=$(echo "$VAR" | sed -r 's/^SC_CONF_TAG_([^=]*)=.*/\1/' | sed 's/__/./g')
+              SC_CONF_TAG_value=$(echo "$VAR" | sed -r "s/^[^=]*=(.*)/\1/")
+              if echo "${NON_STRING_CONF}" | grep "^${SC_CONF_TAG_name}$" >/dev/null; then
+                  echo "${SC_CONF_TAG_name} = ${SC_CONF_TAG_value}" >> ${CONFIG_FILE}
+              else
+                  echo "${SC_CONF_TAG_name} = \"${SC_CONF_TAG_value}\"" >> ${CONFIG_FILE}
+              fi
             fi
         done
     fi
 fi
 
 # RUN scollector
-exec /go/bin/scollector ${OPTIONS}
+exec /go/bin/scollector ${OPTIONS} -h="${SC_CONF_Host}"
