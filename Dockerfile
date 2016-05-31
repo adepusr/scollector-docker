@@ -14,4 +14,4 @@ RUN        mkdir -p /scollector
 COPY       run.sh /scollector/
 RUN        chmod +x /scollector/run.sh
 
-CMD ["/bosun/run.sh"]
+CMD ["/scollector/run.sh"]
